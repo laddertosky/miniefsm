@@ -1,0 +1,6 @@
+*.o
+*.gch
+main
+.cache
+
+compile_commands.json
