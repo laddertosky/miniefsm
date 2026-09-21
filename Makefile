@@ -1,11 +1,12 @@
-GXX=gcc
-GXXFLAG=-g -Wall -std=c++20
+GXX=g++
+GXXFLAG=-g -Wall -std=c++20 -fconcepts-diagnostics-depth=3
+HEADERS=miniefsm.hpp typelist.hpp
 
 main: main.o
 	$(GXX) $(GXXFLAG) $^ -o main
 
-main.o: miniefsm.hpp
-	$(GXX) $(GXXFLAG) -c main.cpp miniefsm.hpp 
+main.o: $(HEADERS) main.cpp
+	$(GXX) $(GXXFLAG) -c main.cpp 
 
 clean:
 	rm -f *.o *.gch main

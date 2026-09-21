@@ -1,4 +1,5 @@
 #include "miniefsm.hpp"
+#include "typelist.hpp"
 
 enum class MyState {
   Idle,
@@ -27,8 +28,9 @@ struct WaitingState {
 };
 
 struct StartWaiting {
-  static constexpr MyState From = MyState::Idle;
-  static constexpr MyState To = MyState::Waiting;
+  using From = IdleState;
+  using To = WaitingState;
+
   static bool Guard(const MyInput &input, const MyContext &ctx) {
     return input.in == 0;
   }
@@ -39,8 +41,9 @@ struct StartWaiting {
 };
 
 struct GenerateOutput {
-  static constexpr MyState From = MyState::Waiting;
-  static constexpr MyState To = MyState::Idle;
+  using From = WaitingState;
+  using To = IdleState;
+
   static bool Guard(const MyInput &input, const MyContext &ctx) {
     return ctx.clock >= 3;
   }
@@ -52,12 +55,15 @@ struct GenerateOutput {
 
 struct MyMachineDefinition {
   using StateEnum = MyState;
-  using InitialState = IdleState;
   using Input = MyInput;
   using Output = MyOutput;
   using Context = MyContext;
-  using States = miniefsm::TypeList<IdleState, WaitingState>;
-  using Transitions = miniefsm::TypeList<StartWaiting, GenerateOutput>;
+  using States = TypeList<IdleState, WaitingState>;
+  using Transitions = TypeList<StartWaiting, GenerateOutput>;
+
+  static constexpr auto InitialState = IdleState{};
 };
 
-int main(int argc, char **argv) {}
+int main(int argc, char **argv) {
+  miniefsm::Machine<MyMachineDefinition> machine;
+}
