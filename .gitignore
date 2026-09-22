@@ -5,3 +5,6 @@ main
 
 compile_commands.json
 build
+
+# ctest
+Testing 
