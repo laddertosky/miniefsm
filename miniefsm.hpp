@@ -108,6 +108,43 @@ concept MachineDefinition =
           std::remove_cv_t<decltype(Definition::InitialState.Id)>>;
     };
 
+template <typename TL> struct StepImpl; // Base case
+
+template <typename... Transitions> struct StepImpl<TypeList<Transitions...>> {
+
+  template <typename StateVariant, typename Input, typename Context,
+            typename Output>
+  static bool Run(StateVariant &currentState, const Input &input, Context &ctx,
+                  Output &output) {
+
+    return std::visit(
+        [&](auto &activeState) -> bool {
+          using Active = std::decay_t<decltype(activeState)>;
+          bool matched = false;
+
+          ([&]() -> void {
+            if constexpr (std::is_same_v<typename Transitions::From, Active>) {
+              if (!matched && Transitions::Guard(input, ctx)) {
+                Transitions::Action(input, ctx, output);
+                currentState = typename Transitions::To{};
+                matched = true;
+              }
+            }
+          } && ...);
+
+          return matched;
+        },
+        currentState);
+  }
+};
+
+template <typename TL, typename StateVariant, typename Input, typename Context,
+          typename Output>
+bool Step(StateVariant &currentState, const Input &input, Context &ctx,
+          Output &output) {
+  return StepImpl<TL>::Run(currentState, input, ctx, output);
+}
+
 template <
     typename Definition /*, typename Policy = FirstValidPolicy<Definition> */>
   requires MachineDefinition<Definition> // && ValidPolicy<Definition, Policy>
@@ -121,16 +158,16 @@ class Machine {
   using VariantStates = VariantFromTypeList_t<States>;
 
 public:
-  Machine() : currentState(Definition::InitialState), context() {}
+  Machine() : currentState(Definition::InitialState), ctx() {}
 
-  void Run() {
-    while (true) {
-    }
+  bool Step(const Input &input, Output &output) {
+    return Step<Transitions, VariantStates, Input, Context, Output>(
+        currentState, input, ctx, output);
   }
 
 private:
   VariantStates currentState;
-  Context context;
+  Context ctx;
   static constexpr States states = Definition::States;
   static constexpr Transitions transitions = Definition::Transitions;
 };
