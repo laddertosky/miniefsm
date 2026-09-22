@@ -3,6 +3,8 @@
 #include <type_traits>
 #include <variant>
 
+namespace miniefsm {
+
 template <typename... Types> struct TypeList {};
 
 template <typename T> struct is_typelist : std::false_type {};
@@ -36,3 +38,5 @@ struct TypeListSize<TypeList<Types...>>
 
 template <typename TL>
 inline constexpr std::size_t TypeListSize_v = TypeListSize<TL>::value;
+
+}; // namespace miniefsm

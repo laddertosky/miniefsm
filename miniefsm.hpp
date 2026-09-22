@@ -8,7 +8,6 @@
 #include <array>
 #include <concepts>
 #include <cstddef>
-#include <iterator>
 #include <optional>
 #include <type_traits>
 #include <variant>
@@ -124,6 +123,12 @@ public:
     return Step<Transitions, Policy, VariantStates, Input, Context, Output>(
         currentState, input, ctx, output);
   }
+
+  template <typename State> bool CurrentStateIs() const {
+    return std::holds_alternative<State>(currentState);
+  }
+
+  const Context &GetContext() const { return ctx; }
 
 private:
   VariantStates currentState;

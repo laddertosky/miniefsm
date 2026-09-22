@@ -51,9 +51,12 @@ template <typename Transition> struct TransitionPriority {
 };
 
 template <typename Transition>
-  requires requires {
-    { Transition::Priority } -> std::convertible_to<int>;
-  }
+concept HasPriority = requires {
+  { Transition::Priority } -> std::convertible_to<int>;
+};
+
+template <typename Transition>
+  requires HasPriority<Transition>
 struct TransitionPriority<Transition> {
   static constexpr int value = Transition::Priority;
 };

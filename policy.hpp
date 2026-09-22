@@ -5,6 +5,8 @@
 #include <optional>
 #include <stdexcept>
 
+namespace miniefsm {
+
 template <typename Policy, std::size_t N>
 concept BasePolicy = requires(const std::array<bool, N> &matches) {
   { Policy::Select(matches) } -> std::same_as<std::optional<std::size_t>>;
@@ -76,3 +78,5 @@ struct PriorityPolicy {
     return best;
   }
 };
+
+}; // namespace miniefsm
