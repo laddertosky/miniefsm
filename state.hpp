@@ -5,6 +5,14 @@
 
 namespace miniefsm {
 
+// A valid State must provide:
+//   Id            (required) - static constexpr StateEnum; identifies which
+//                      enumerator this state type corresponds to.
+//   Invariant     (required) - static bool Invariant(const Context&);
+//                      must hold true whenever the machine is sitting in this
+//                      state; checked by callers, e.g. after a transition
+//                      fires.
+//
 template <typename State, typename StateEnum, typename Context>
 concept StateDefinition =
     // Members

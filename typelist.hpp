@@ -7,8 +7,8 @@ template <typename... Types> struct TypeList {};
 
 template <typename T> struct is_typelist : std::false_type {};
 
-template <typename... Ts>
-struct is_typelist<TypeList<Ts...>> : std::true_type {};
+template <typename... Types>
+struct is_typelist<TypeList<Types...>> : std::true_type {};
 
 // Base case: type is not in an empty list
 template <typename T, typename List> struct is_in_list : std::false_type {};
@@ -27,3 +27,12 @@ template <typename... Types> struct VariantFromTypeList<TypeList<Types...>> {
 
 template <typename TL>
 using VariantFromTypeList_t = typename VariantFromTypeList<TL>::type;
+
+template <typename TL> struct TypeListSize;
+
+template <typename... Types>
+struct TypeListSize<TypeList<Types...>>
+    : std::integral_constant<std::size_t, sizeof...(Types)> {};
+
+template <typename TL>
+inline constexpr std::size_t TypeListSize_v = TypeListSize<TL>::value;
