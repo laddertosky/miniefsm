@@ -9,5 +9,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_library(miniefsm INTERFACE)
 target_include_directories(miniefsm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Example
+add_executable(delay main.cpp)
+target_link_libraries(delay PRIVATE miniefsm)
+
 enable_testing()
 add_subdirectory(tests)

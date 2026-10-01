@@ -1,5 +1,6 @@
 #include "miniefsm.hpp"
 #include "typelist.hpp"
+#include <cassert>
 
 enum class MyState {
   Idle,
@@ -32,7 +33,7 @@ struct StartWaiting {
   using To = WaitingState;
 
   static bool Guard(const MyInput &input, const MyContext &ctx) {
-    return input.in == 0;
+    return ctx.buf == 0;
   }
   static void Action(const MyInput &input, MyContext &ctx, MyOutput &output) {
     ctx.buf = input.in;
@@ -58,12 +59,17 @@ struct MyMachineDefinition {
   using Input = MyInput;
   using Output = MyOutput;
   using Context = MyContext;
-  using States = TypeList<IdleState, WaitingState>;
-  using Transitions = TypeList<StartWaiting, GenerateOutput>;
+  using States = miniefsm::TypeList<IdleState, WaitingState>;
+  using Transitions = miniefsm::TypeList<StartWaiting, GenerateOutput>;
 
   static constexpr auto InitialState = IdleState{};
 };
 
 int main(int argc, char **argv) {
   miniefsm::Machine<MyMachineDefinition> machine;
+
+  MyOutput out{};
+  assert(machine.CurrentStateIs<IdleState>());
+  machine.Step(MyInput{.in = 1}, out);
+  assert(machine.CurrentStateIs<WaitingState>());
 }

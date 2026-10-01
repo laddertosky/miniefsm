@@ -48,6 +48,28 @@ template <typename TL, typename Policy> struct StepImpl; // Base case
 template <typename... Transitions, typename Policy>
 struct StepImpl<TypeList<Transitions...>, Policy> {
 
+  template <typename Active, typename Transition, typename Input,
+            typename Context>
+  static void Evaluate(const Input &input, Context &ctx, bool &match,
+                       int &priority) {
+    if constexpr (std::is_same_v<typename Transition::From, Active>) {
+      if (Transition::Guard(input, ctx)) {
+        match = true;
+        priority = TransitionPriority_v<Transition>;
+      }
+    }
+  }
+
+  template <typename Transition, typename StateVariant, typename Input,
+            typename Context, typename Output>
+  static void Fire(bool selected, StateVariant &currentState,
+                   const Input &input, Context &ctx, Output &output) {
+    if (selected) {
+      Transition::Action(input, ctx, output);
+      currentState = typename Transition::To{};
+    }
+  }
+
   template <typename StateVariant, typename Input, typename Context,
             typename Output>
   static bool Run(StateVariant &currentState, const Input &input, Context &ctx,
@@ -61,19 +83,13 @@ struct StepImpl<TypeList<Transitions...>, Policy> {
           std::array<int, N> priorities{};
 
           size_t index = 0;
-          ([&]() -> void {
-            if constexpr (std::is_same_v<typename Transitions::From, Active>) {
-              if (Transitions::Guard(input, ctx)) {
-                matches[index] = true;
-                priorities[index] = TransitionPriority_v<Transitions>;
-              }
-            }
-
-            index++;
-          } && ...);
+          ((Evaluate<Active, Transitions, Input, Context>(
+                input, ctx, matches[index], priorities[index]),
+            index++),
+           ...);
 
           std::optional<size_t> selected;
-          if constexpr (requires { Policy::Select(matches); }) {
+          if constexpr (PriorityAwarePolicy<Policy, N>) {
             selected = Policy::Select(matches, priorities);
           } else {
             selected = Policy::Select(matches);
@@ -84,13 +100,9 @@ struct StepImpl<TypeList<Transitions...>, Policy> {
 
           // Fine, assume N won't be too large
           index = 0;
-          ([&]() -> void {
-            if (selected.value() == index) {
-              Transitions::Action(input, ctx, output);
-              currentState = typename Transitions::To{};
-            }
-            index++;
-          } && ...);
+          (Fire<Transitions, StateVariant, Input, Context, Output>(
+               selected.value() == index++, currentState, input, ctx, output),
+           ...);
           return true;
         },
         currentState);
@@ -102,7 +114,7 @@ template <typename TL, typename Policy, typename StateVariant, typename Input,
 bool Step(StateVariant &currentState, const Input &input, Context &ctx,
           Output &output) {
   return StepImpl<TL, Policy>::Run(currentState, input, ctx, output);
-}
+};
 
 template <typename Definition, typename Policy = FirstMatchPolicy>
   requires MachineDefinition<Definition> &&
@@ -114,14 +126,13 @@ class Machine {
 
   using States = typename Definition::States;
   using Transitions = typename Definition::Transitions;
-  using VariantStates = VariantFromTypeList_t<States>;
+  using StateVariant = VariantFromTypeList_t<States>;
 
 public:
   Machine() : currentState(Definition::InitialState), ctx() {}
 
   bool Step(const Input &input, Output &output) {
-    return Step<Transitions, Policy, VariantStates, Input, Context, Output>(
-        currentState, input, ctx, output);
+    return StepImpl<Transitions, Policy>::Run(currentState, input, ctx, output);
   }
 
   template <typename State> bool CurrentStateIs() const {
@@ -131,10 +142,8 @@ public:
   const Context &GetContext() const { return ctx; }
 
 private:
-  VariantStates currentState;
+  StateVariant currentState;
   Context ctx;
-  static constexpr States states = Definition::States;
-  static constexpr Transitions transitions = Definition::Transitions;
 };
 
 } // namespace miniefsm

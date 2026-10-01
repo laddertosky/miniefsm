@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <concepts>
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
@@ -38,7 +39,7 @@ struct FirstMatchPolicy {
 struct LastMatchPolicy {
   template <std::size_t N>
   static std::optional<std::size_t> Select(const std::array<bool, N> &matches) {
-    for (std::size_t i = N - 1; i >= 0; i--) {
+    for (std::size_t i = N - 1; i-- > 0;) {
       if (matches[i])
         return i;
     }

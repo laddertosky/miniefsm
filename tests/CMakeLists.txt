@@ -8,9 +8,9 @@ FetchContent_MakeAvailable(Catch2)
 
 add_executable(miniefsm_tests
   concepts_test.cpp
-  traits_test.cpp
+  machine_test.cpp
   policy_test.cpp
-  # machine_test.cpp
+  traits_test.cpp
 )
 target_link_libraries(miniefsm_tests PRIVATE miniefsm Catch2::Catch2WithMain)
 
