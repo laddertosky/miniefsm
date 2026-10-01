@@ -109,13 +109,6 @@ struct StepImpl<TypeList<Transitions...>, Policy> {
   }
 };
 
-template <typename TL, typename Policy, typename StateVariant, typename Input,
-          typename Context, typename Output>
-bool Step(StateVariant &currentState, const Input &input, Context &ctx,
-          Output &output) {
-  return StepImpl<TL, Policy>::Run(currentState, input, ctx, output);
-};
-
 template <typename Definition, typename Policy = FirstMatchPolicy>
   requires MachineDefinition<Definition> &&
            ValidPolicy<Policy, TypeListSize_v<typename Definition::Transitions>>
